@@ -1,36 +1,41 @@
-package Client
+package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"time"
 )
 
 type USDBRL struct {
-	Bid string `json:"bid"`
+	Code       string `json:"code"`
+	Codein     string `json:"codein"`
+	Name       string `json:"name"`
+	High       string `json:"high"`
+	Low        string `json:"low"`
+	VarBid     string `json:"varBid"`
+	PctChange  string `json:"pctChange"`
+	Bid        string `json:"bid"`
+	Ask        string `json:"ask"`
+	Timestamp  string `json:"timestamp"`
+	CreateDate string `json:"create_date"`
 }
 
 func main() {
+	//request nill
 	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
 	defer cancel()
 
-	select {
-	case <-time.After(300 * time.Millisecond):
-		log.Println("Request processed with success.")
-	case <-ctx.Done():
-		log.Println("Request cancelled.")
-	}
-
 	req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:8080/cotacao", nil)
 	if err != nil {
-		fmt.Println("Error in the request client:", err)
+		fmt.Println("Error in the request client", err)
 		return
 	}
 
+	fmt.Println(req)
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println("Error in the response client:", err)
@@ -45,11 +50,11 @@ func main() {
 		return
 	}
 
-	//var usdBrl USDBRL
-	//err = json.Unmarshal(body, &usdBrl)
-	//if err != nil {
-	//	panic(err)
-	//}
+	var usdBrl USDBRL
+	err = json.Unmarshal(body, &usdBrl)
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	file, err := os.Create("cotacao.txt")
 	if err != nil {
