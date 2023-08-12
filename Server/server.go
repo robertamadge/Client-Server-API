@@ -8,9 +8,6 @@ import (
 	"time"
 )
 
-// Usando o package "context", o server.go deverá registrar no banco de dados SQLite cada cotação recebida
-// , sendo que o timeout máximo para chamar a API de cotação do dólar deverá ser de 200ms e o timeout máximo
-// para conseguir persistir os dados no banco deverá ser de 10ms.
 type Cotacao struct {
 	USDBRL USDBRL `json:"USDBRL"`
 }
@@ -35,7 +32,7 @@ func main() {
 	cotacao := Cotacao{}
 	muxServer.HandleFunc("/cotacao", cotacao.CotacaoHandler)
 
-	http.ListenAndServe(":8081", muxServer)
+	http.ListenAndServe(":8080", muxServer)
 }
 
 func (c Cotacao) CotacaoHandler(w http.ResponseWriter, r *http.Request) {

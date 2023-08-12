@@ -4,20 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	server "github.com/robertamadge/Client-Server-API/Server"
 	"io"
 	"net/http"
 	"os"
 	"time"
-)
 
-//Utilizando o package "context", o client.go terá um timeout máximo de 300ms para receber o resultado do server.go.
+	server "github.com/robertamadge/Client-Server-API/Server"
+)
 
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:8081/cotacao", nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", "http://localhost:8080/cotacao", nil)
 	if err != nil {
 		panic(err)
 	}
