@@ -3,13 +3,15 @@ package Server
 import (
 	"fmt"
 	"io"
+	"log"
 	"net/http"
+	"time"
 )
 
 // Usando o package "context", o server.go deverá registrar no banco de dados SQLite cada cotação recebida
 // , sendo que o timeout máximo para chamar a API de cotação do dólar deverá ser de 200ms e o timeout máximo
 // para conseguir persistir os dados no banco deverá ser de 10ms.
-type Cambio struct {
+type Cotacao struct {
 	USDBRL USDBRL `json:"USDBRL"`
 }
 
@@ -27,27 +29,45 @@ type USDBRL struct {
 	CreateDate string `json:"create_date"`
 }
 
-func RunServer() {
+func main() {
 	muxServer := http.NewServeMux()
 
-	cambio := Cambio{}
-	muxServer.HandleFunc("/cotacao", cambio.CotacaoHandler)
+	cotacao := Cotacao{}
+	muxServer.HandleFunc("/cotacao", cotacao.CotacaoHandler)
 
 	http.ListenAndServe(":8081", muxServer)
 }
 
-func (c Cambio) CotacaoHandler(w http.ResponseWriter, r *http.Request) {
-	req, err := http.Get("https://economia.awesomeapi.com.br/json/last/USD-BRL")
+func (c Cotacao) CotacaoHandler(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	log.Println("Request iniciada")
+	defer log.Println("Request finalizada")
+
+	select {
+	case <-time.After(5 * time.Second):
+		log.Println("Request processada com sucesso.")
+		w.Write([]byte("Request processada com sucesso"))
+	case <-ctx.Done():
+		log.Println("Request cancelada pelo cliente")
+		http.Error(w, "Request cancelada pelo cliente", http.StatusRequestTimeout)
+	}
+
+	req, err := http.NewRequestWithContext(ctx,
+		"GET", "https://economia.awesomeapi.com.br/json/last/USD-BRL",
+		nil)
 	if err != nil {
-		panic(err)
+		fmt.Println("Error in the request server:", err)
+		return
 	}
 
 	defer req.Body.Close()
 
 	body, err := io.ReadAll(req.Body)
 	if err != nil {
-		panic(err)
+		fmt.Println("Error reading body server:", err)
+		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 
 	fmt.Println(string(body))
