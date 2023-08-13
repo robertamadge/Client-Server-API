@@ -9,22 +9,6 @@ import (
 )
 
 func main() {
-	//db, err := sql.Open("sqlite3", "currency.db")
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-	//defer db.Close()
-	//
-	//_, err = db.Exec(`
-	//	CREATE TABLE IF NOT EXISTS currency (
-	//		id INTEGER PRIMARY KEY,
-	//		dollar FLOAT
-	//	);
-	//`)
-	//if err != nil {
-	//	log.Fatal(err)
-	//}
-
 	muxServer := http.NewServeMux()
 
 	muxServer.HandleFunc("/cotacao", CotacaoHandler)
