@@ -23,7 +23,6 @@ type ExchangeRate struct {
 	USDBRL USDBRL `json:"USDBRL"`
 }
 
-// create table exchange_rate (id varchar(255), name varchar(80), bid varchar(80), primary key (id));
 func main() {
 	timeout := 10 * time.Second
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -63,7 +62,6 @@ func main() {
 		return
 	}
 	newExchangeRate := NewExchangeRate(exchangeRate.USDBRL.Name, exchangeRate.USDBRL.Bid)
-	//newExchangeRate := NewExchangeRate("Dólar", 4.0)
 
 	select {
 	case <-time.After(timeout):
