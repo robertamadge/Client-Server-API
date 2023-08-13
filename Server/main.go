@@ -37,9 +37,9 @@ func CotacaoHandler(w http.ResponseWriter, r *http.Request) {
 
 	select {
 	case <-time.After(200 * time.Millisecond):
-		log.Println("Request processed with success:server.")
+		log.Println("Request processed with success.")
 	case <-ctx.Done():
-		log.Println("Request cancelled:server.")
+		log.Println("Request cancelled.")
 	}
 
 	req, err := http.NewRequestWithContext(ctx,
@@ -52,7 +52,7 @@ func CotacaoHandler(w http.ResponseWriter, r *http.Request) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Println("Error in the response server", err)
+		fmt.Println("Error in the response", err)
 		return
 	}
 
@@ -63,14 +63,7 @@ func CotacaoHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error reading response", http.StatusInternalServerError)
 		return
 	}
-	//var usdBrl USDBRL
-	//err = json.Unmarshal(body, &usdBrl)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//fmt.Println(body)
 
 	w.Header().Set("Content-Type", "application/json")
-
 	w.Write(body)
 }
