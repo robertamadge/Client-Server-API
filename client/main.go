@@ -11,8 +11,7 @@ import (
 )
 
 type USDBRL struct {
-	Name string `json:"name"`
-	Bid  string `json:"bid"`
+	Bid string `json:"bid"`
 }
 
 type ExchangeRate struct {

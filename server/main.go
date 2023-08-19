@@ -2,11 +2,26 @@ package main
 
 import (
 	"fmt"
+	"gorm.io/gorm"
 	"io"
 	"log"
 	"net/http"
 	"time"
 )
+
+type USDBRL struct {
+	ID             string `json:"id" gorm:"primaryKey"`
+	ExchangeRateID int
+	ExchangeRate   *ExchangeRate
+	Name           string `json:"name"`
+	Bid            string `json:"bid"`
+	gorm.Model
+}
+
+type ExchangeRate struct {
+	ID     int    `json:"id" gorm:"primaryKey"`
+	USDBRL USDBRL `json:"USDBRL"`
+}
 
 func main() {
 	muxServer := http.NewServeMux()
