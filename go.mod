@@ -3,6 +3,7 @@ module github.com/robertamadge/Client-Server-API
 go 1.20
 
 require (
+	github.com/jinzhu/gorm v1.9.16
 	gorm.io/driver/sqlite v1.5.3
 	gorm.io/gorm v1.25.3
 )
