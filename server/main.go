@@ -1,8 +1,12 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"io"
 	"log"
 	"net/http"
@@ -10,17 +14,15 @@ import (
 )
 
 type USDBRL struct {
-	ID             string `json:"id" gorm:"primaryKey"`
+	gorm.Model
 	ExchangeRateID int
-	ExchangeRate   *ExchangeRate
 	Name           string `json:"name"`
 	Bid            string `json:"bid"`
-	gorm.Model
 }
 
 type ExchangeRate struct {
-	ID     int    `json:"id" gorm:"primaryKey"`
-	USDBRL USDBRL `json:"USDBRL"`
+	gorm.Model
+	USDBRL USDBRL `json:"USDBRL" gorm:"foreignKey:ExchangeRateID"`
 }
 
 func main() {
@@ -28,20 +30,23 @@ func main() {
 
 	muxServer.HandleFunc("/cotacao", CotacaoHandler)
 
-	http.ListenAndServe(":8080", muxServer)
+	err := http.ListenAndServe(":8080", muxServer)
+	if err != nil {
+		return
+	}
 }
 
 func CotacaoHandler(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctxServer := r.Context()
 
 	select {
 	case <-time.After(200 * time.Millisecond):
 		log.Println("Request processed with success.")
-	case <-ctx.Done():
+	case <-ctxServer.Done():
 		log.Println("Request cancelled.")
 	}
 
-	req, err := http.NewRequestWithContext(ctx,
+	req, err := http.NewRequestWithContext(ctxServer,
 		"GET", "https://economia.awesomeapi.com.br/json/last/USD-BRL",
 		nil)
 	if err != nil {
@@ -65,4 +70,42 @@ func CotacaoHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(body)
+
+	timeoutDB := 210 * time.Millisecond
+	ctxDB, cancel := context.WithTimeout(context.Background(), timeoutDB)
+	defer cancel()
+
+	dsn := "database.db"
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
+
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
+
+	sqlDB, err := db.DB()
+	defer sqlDB.Close()
+
+	err = db.AutoMigrate(&ExchangeRate{}, &USDBRL{})
+	if err != nil {
+		http.Error(w, "Error in migration", http.StatusInternalServerError)
+		return
+	}
+
+	var exchangeRate ExchangeRate
+	err = json.Unmarshal(body, &exchangeRate)
+	if err != nil {
+		fmt.Println("Error parsing JSON:", err)
+		return
+	}
+
+	errDB := db.WithContext(ctxDB).Create(&exchangeRate).Error
+	if errDB != nil {
+		log.Println("Error inserting exchange rate:", errDB)
+		log.Println("Request cancelled.")
+	} else {
+		log.Println("Exchange rate inserted successfully.")
+		log.Println("Request processed with success.")
+	}
 }
