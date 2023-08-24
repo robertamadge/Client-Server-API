@@ -83,11 +83,10 @@ func CotacaoHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
-	// Close the database connection when done
+
 	sqlDB, err := db.DB()
 	defer sqlDB.Close()
 
-	// AutoMigrate creates the tables if they don't exist
 	err = db.AutoMigrate(&ExchangeRate{}, &USDBRL{})
 	if err != nil {
 		http.Error(w, "Error in migration", http.StatusInternalServerError)
