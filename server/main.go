@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -27,23 +28,16 @@ type ExchangeRate struct {
 
 func main() {
 	muxServer := http.NewServeMux()
-
 	muxServer.HandleFunc("/cotacao", CotacaoHandler)
-
-	err := http.ListenAndServe(":8080", muxServer)
-	if err != nil {
-		return
-	}
+	http.ListenAndServe(":8080", muxServer)
 }
 
 func CotacaoHandler(w http.ResponseWriter, r *http.Request) {
 	ctxServer := r.Context()
 
-	select {
-	case <-time.After(200 * time.Millisecond):
-		log.Println("Request processed with success.")
-	case <-ctxServer.Done():
-		log.Println("Request cancelled.")
+	if errors.Is(ctxServer.Err(), context.DeadlineExceeded) {
+		http.Error(w, "Request timed out", http.StatusRequestTimeout)
+		return
 	}
 
 	req, err := http.NewRequestWithContext(ctxServer,
@@ -56,8 +50,9 @@ func CotacaoHandler(w http.ResponseWriter, r *http.Request) {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Println("Error in the response", err)
-		return
+		log.Println("Request timed out")
+	} else {
+		log.Println("Request processed with success.")
 	}
 
 	defer res.Body.Close()
